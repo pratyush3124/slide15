@@ -6,19 +6,45 @@ class Slide15(Tk):
     def __init__(self):
         Tk.__init__(self)
 
-        frame = game(self)
-        frame.pack()
+        default = 4
+        self.frame = game(self,default)
+        self.frame.grid(row = 0,column = 0)
+        
+        self.playagainb = Button(self,text = 'Play Again',command = lambda:self.playagain(default))
+        self.playagainb.grid(row = 1, column = 0,sticky = 'W')
+
+        self.settingsb = Button(self,text = 'Settings',command = lambda:self.settings())
+        self.settingsb.grid(row = 1, column = 0,sticky = 'E')
+
+    def aftergame(self):
+        self.frame.destroy()
+
+    def playagain(self,n):
+        self.temp.destroy()
+        self.frame.destroy()
+        self.frame = game(self,n)
+        self.frame.grid(row = 0,column = 0)
+
+    def settings(self):
+        self.temp = Tk()
+        b3 = Button(self.temp,text = '3x3',command = lambda:self.playagain(3))
+        b3.grid(row = 0,column = 0)
+
+        b4 = Button(self.temp,text = '4x4',command = lambda:self.playagain(4))
+        b4.grid(row = 1,column = 0)
 
 class game(Frame):
-    def __init__(self,parent):
+    def __init__(self,parent,g):
         Frame.__init__(self,parent)
+        self.parent = parent
         font = ('Banschrift',25)
         color = '#b2babb'
-        self.llist = [[0]*4 for _ in range(4)]
-        for i in range(4):
-            for j in range(4):
-                if i != 3 or j!=3:
-                    self.llist[i][j] = Label(self,text=i*4+j+1,font = font,background = color,bd = 1, relief = 'ridge',height = 2, width = 4)
+        self.width = g
+        self.llist = [[0]*self.width for _ in range(self.width)]
+        for i in range(self.width):
+            for j in range(self.width):
+                if i != self.width-1 or j!=self.width-1:
+                    self.llist[i][j] = Label(self,text=i*self.width+j+1,font = font,background = color,bd = 1, relief = 'ridge',height = 2, width = 4)
                 else:
                     self.llist[i][j] = Label(self,text=' ',font = font,background = 'white',bd = 1, relief = 'ridge',height = 2, width = 4)
         self.shuffle()
@@ -28,7 +54,7 @@ class game(Frame):
         if self.llist[r][c]['text'] == ' ':
             return
 
-        for i in range(4):
+        for i in range(self.width):
             if self.llist[r][i]['text'] == ' ':
                 x = i-c
                 q = int(((x**2)**(1/2))/x/(-1))
@@ -46,8 +72,8 @@ class game(Frame):
         self.refresh()
         
     def refresh(self):
-        for i in range(4):
-            for j in range(4):
+        for i in range(self.width):
+            for j in range(self.width):
                 self.llist[i][j].grid(row = i,column =j)
                 self.llist[i][j].bind('<Button-1>',lambda event, r = i, c = j: self.click(r,c))
 
@@ -59,35 +85,36 @@ class game(Frame):
         self.llist[s][d] = a
 
     def checkwin(self):
-        f = 1
-        for i in range(4):
-            for j in range(4):
-                if i != 3 or j!=3:
-                    if self.llist[i][j]['text'] != i*4+j+1:
-                        f = 0
-        
-        if f:
+        flag = 1
+        for i in range(self.width):
+            for j in range(self.width):
+                if i != self.width-1 or j!=self.width-1:
+                    if self.llist[i][j]['text'] != i*self.width+j+1:
+                        flag = 0
+
+        if flag:
             messagebox.showinfo('Congradulations','YOU WIN!!')
+            self.parent.aftergame()
 
     def shuffle(self):
         l = []
-        for i in range(100):
-            a = random.randint(0,3)
-            b = random.randint(0,3)
-            c = random.randint(0,3)
-            d = random.randint(0,3)    
+        for i in range(self.width*10):#randomly sliding 100 times
+            a = random.randint(0,self.width-1)
+            b = random.randint(0,self.width-1)
+            c = random.randint(0,self.width-1)
+            d = random.randint(0,self.width-1)
             self.swap(a,b,c,d)
-        for i in range(4):
-            for j in range(4):
+
+        for i in range(self.width):#making a linear list
+            for j in range(self.width):
                 l.append(self.llist[i][j]['text'])
                 if self.llist[i][j]['text'] == ' ':
-                    a = 4-i
+                    a = self.width-i
                 elif self.llist[i][j]['text'] == 1:
                     a1,b1 = i,j
                 elif self.llist[i][j]['text'] == 2:
                     a2,b2 = i,j
-        j = 1
-        t = 0
+
         def inversions(l,j):
             s = 0
             for i in l:
@@ -95,16 +122,22 @@ class game(Frame):
                     if i < j and l.index(i) > l.index(j):
                         s += 1
             return(s)
-        for i in l:
-            if i != ' ':
-                t += inversions(l,i)
-        if t%2 == 0:
-            if a%2 == 0:
-                self.swap(a1,b1,a2,b2)
-        else:
-            if a%2 != 0:
-                self.swap(a1,b1,a2,b2)
 
+        inv_count = 0
+        for i in l:# counting total no. of inversions
+            if i != ' ':
+                inv_count += inversions(l,i)
+
+        if self.width % 2 == 0:
+            if inv_count%2 == 0:
+                if a%2 == 0:
+                    self.swap(a1,b1,a2,b2)
+            else:
+                if a%2 != 0:
+                    self.swap(a1,b1,a2,b2)
+        else:
+            if inv_count % 2 != 0:
+                self.swap(a1,b1,a2,b2)
 if __name__ == '__main__':
     gameone = Slide15()
     gameone.mainloop()
