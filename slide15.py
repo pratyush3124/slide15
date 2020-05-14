@@ -1,4 +1,4 @@
-from  tkinter import *
+from  tkinter import Tk,Label,Frame,Button
 from tkinter import messagebox
 import random
 
@@ -20,10 +20,14 @@ class Slide15(Tk):
         self.frame.destroy()
 
     def playagain(self,n):
-        self.temp.destroy()
-        self.frame.destroy()
-        self.frame = game(self,n)
-        self.frame.grid(row = 0,column = 0)
+        try:
+            self.temp.destroy()
+        except:
+            pass
+        finally:
+            self.frame.destroy()
+            self.frame = game(self,n)
+            self.frame.grid(row = 0,column = 0)
 
     def settings(self):
         self.temp = Tk()
@@ -32,6 +36,7 @@ class Slide15(Tk):
 
         b4 = Button(self.temp,text = '4x4',command = lambda:self.playagain(4))
         b4.grid(row = 1,column = 0)
+
 
 class game(Frame):
     def __init__(self,parent,g):
@@ -138,6 +143,8 @@ class game(Frame):
         else:
             if inv_count % 2 != 0:
                 self.swap(a1,b1,a2,b2)
+
+
 if __name__ == '__main__':
     gameone = Slide15()
     gameone.mainloop()
